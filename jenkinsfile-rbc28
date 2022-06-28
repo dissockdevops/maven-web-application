@@ -1,0 +1,16 @@
+node{
+ def mavenHome = tool name:'maven 3.8.6'   
+ stage('1cloneCode'){git "https://github.com/dissockdevops/maven-web-application"} 
+ stage('2Test&Build'){sh "${mavenHome}/bin/mvn install"}
+ stage('3CodeQuality'){sh "${mavenHome}/bin/mvn sonar:sonar"}
+ stage('4UploadArtifacts'){sh "${mavenHome}/bin/mvn deploy"}
+ stage('5deploy_uat'){deploy adapters: [tomcat9(credentialsId: 'tomcat-creden', path: '', url: 'http://50.19.183.140:8080/')], contextPath: null, war: 'target/*war'}
+  stage('6Approval'){
+    timeout(time:9, unit:'HOURS') {
+        input message: 'Application ready for deployment, Please review and approve'
+    }
+  }
+}
+stage('7deploy_prod')//{deploy adapters: [tomcat9(credentialsId: 'tomcat-creden', path: '', url: 'http://50.19.183.140:8080/')], contextPath: null, war: 'targer/*war'}
+stage('8Notification'){ stage('8Notification'){emailext body: 'Build status for frontend application.', recipientProviders: [buildUser(), developers()], subject: 'build status', to: 'bertolddissock@gmail.com'}
+}
